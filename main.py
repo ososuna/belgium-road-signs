@@ -1,19 +1,21 @@
+
+# Import libraries
 import tensorflow as tf
 from tensorflow import keras
+import os
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as imd
-import os
 from skimage import transform
 from skimage.color import rgb2gray
-import random
 
-print(tf.__version__)
-
+# Directory routes for datasets
 main_dir = 'datasets/belgian/'
 train_data_dir = os.path.join(main_dir, 'Training')
 test_data_dir = os.path.join(main_dir, 'Testing')
 
+# Function for loading belgian train and test datasets
 def load_data(data_directory):
     dirs = [d for d in os.listdir(data_directory)
            if os.path.isdir(os.path.join(data_directory, d))]
@@ -30,43 +32,7 @@ def load_data(data_directory):
     
     return images, labels
 
-train_images, train_labels = load_data(train_data_dir)
-test_images, test_labels = load_data(test_data_dir)
-
-# train_images = np.array(train_images)
-# test_images = np.array(test_images)
-
-train_labels = np.array(train_labels)
-test_labels = np.array(test_labels)
-
-train_images = [transform.resize(image, (30,30)) for image in train_images]
-test_images = [transform.resize(image, (30,30)) for image in test_images]
-
-train_images = np.array(train_images)
-test_images = np.array(test_images)
-
-train_images = rgb2gray(train_images)
-test_images = rgb2gray(test_images)
-
-model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(30, 30)),
-    keras.layers.Dense(128, activation='relu'),
-    keras.layers.Dense(62, activation='softmax')
-])
-
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
-
-model.fit(train_images, train_labels, epochs=20)
-
-# Validate model
-test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
-print(f'Accuracy: {test_acc}')
-
-# Predictions
-predictions = model.predict(test_images)
-
+# Functions for showing predictions using matplotlib
 def plot_image(i, predictions_array, true_label, img):
     predictions_array, true_label, img = predictions_array, true_label[i], img[i]
     plt.grid(False)
@@ -98,8 +64,50 @@ def plot_value_array(i, predictions_array, true_label):
     thisplot[predicted_label].set_color('red')
     thisplot[true_label].set_color('blue')
 
+# Pre-process dataset
+train_images, train_labels = load_data(train_data_dir)
+test_images, test_labels = load_data(test_data_dir)
+
+train_labels = np.array(train_labels)
+test_labels = np.array(test_labels)
+
+train_images = [transform.resize(image, (30,30)) for image in train_images]
+test_images = [transform.resize(image, (30,30)) for image in test_images]
+
+train_images = np.array(train_images)
+test_images = np.array(test_images)
+
+train_images = rgb2gray(train_images)
+test_images = rgb2gray(test_images)
+
+# Model building
+model = keras.Sequential([
+    keras.layers.Flatten(input_shape=(30, 30)),
+    keras.layers.Dense(128, activation='relu'),
+    keras.layers.Dense(62, activation='softmax')
+])
+
+# Model compile
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Model training
+model.fit(train_images, train_labels, epochs=20)
+
+# Validate model
+test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
+print(f'Accuracy: {test_acc}')
+
+# Predictions with random images
+predictions = model.predict(test_images)
+
+# Generate random labels
 rand_signs = random.sample(range(0, len(test_labels)), 15)
 rand_signs
+
+# Plot the first X test images, their predicted labels, and the true labels.
+# Color correct predictions in blue and incorrect predictions in red.
 num_rows = 5
 num_cols = 3
 num_images = num_rows*num_cols
